@@ -695,7 +695,7 @@ LOG_EXIT();
         return;
     }
 
-    YEXE("special-buffer-prepare-jump-focus", "*ctags-find-list");
+    YEXE("special-buffer-prepare-jump-focus", path);
     YEXE("buffer", path);
 
     if (ys->active_frame         == NULL
