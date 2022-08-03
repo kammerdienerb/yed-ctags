@@ -189,6 +189,8 @@ int yed_plugin_boot(yed_plugin *self) {
         ctags_parse();
     }
 
+    get_or_make_buff();
+
     return 0;
 }
 
