@@ -14,6 +14,7 @@ typedef struct {
     char              *text;
     int                row;
     int                col;
+    int                rel_col;
 } ctags_fn_hint;
 
 static int                     gen_thread_started;
@@ -67,6 +68,7 @@ void ctags_buffer_post_write_handler(yed_event *event);
 void ctags_buffer_pre_quit_handler(yed_event *event);
 void ctags_buffer_post_insert_handler(yed_event *event);
 void ctags_cursor_post_move_handler(yed_event *event);
+void ctags_var_handler(yed_event *event);
 
 void estyle(yed_event *event) {
     yed_syntax_style_event(&syn,     event);
@@ -76,6 +78,7 @@ void estyle(yed_event *event) {
 static int ctags_compl(char *string, struct yed_completion_results_t *results);
 
 static const char *tags_file_name(void);
+static void launch_tmp_tags_gen(void);
 static void setup_tmp_tags(void);
 
 int yed_plugin_boot(yed_plugin *self) {
@@ -88,6 +91,7 @@ int yed_plugin_boot(yed_plugin *self) {
     yed_event_handler quit;
     yed_event_handler insert;
     yed_event_handler move;
+    yed_event_handler var;
     yed_event_handler style;
 
     YED_PLUG_VERSION_CHECK();
@@ -119,6 +123,8 @@ int yed_plugin_boot(yed_plugin *self) {
     insert.fn          = ctags_buffer_post_insert_handler;
     move.kind          = EVENT_CURSOR_POST_MOVE;
     move.fn            = ctags_cursor_post_move_handler;
+    var.kind           = EVENT_VAR_POST_SET;
+    var.fn             = ctags_var_handler;
     style.kind         = EVENT_STYLE_CHANGE;
     style.fn           = estyle;
     yed_plugin_add_event_handler(self, key_pressed);
@@ -182,6 +188,12 @@ int yed_plugin_boot(yed_plugin *self) {
         if (access(yed_get_var("ctags-tags-file"), F_OK) != 0) {
             setup_tmp_tags();
         }
+    }
+
+    if (using_tmp) {
+        launch_tmp_tags_gen();
+    } else {
+        YEXE("ctags-gen");
     }
 
     if (yed_var_is_truthy("ctags-enable-extra-highlighting")
@@ -284,9 +296,10 @@ static void push_fn_hint(char *hint, int row, int col) {
             ? abs_y + 1
             : abs_y - 1;
 
-    new_hint.text = strdup(hint);
-    new_hint.row  = abs_y;
-    new_hint.col  = abs_x;
+    new_hint.text    = strdup(hint);
+    new_hint.row     = abs_y;
+    new_hint.col     = abs_x;
+    new_hint.rel_col = col;
 
     array_push(hint_stack, new_hint);
 
@@ -345,8 +358,6 @@ static void launch_tmp_tags_gen(void) {
 
             base = get_path_basename(check_path);
 
-            if (strncmp(base, ".yed_ctags", strlen(".yed_ctags")) == 0) { goto next1; }
-
             array_traverse(tmp_tags_buffers, it) {
                 if (strcmp(*it, check_path) == 0) { goto next1; }
             }
@@ -374,8 +385,6 @@ next1:;
             abs_path(rel_path, check_path);
 
             base = get_path_basename(check_path);
-
-            if (strncmp(base, ".yed_ctags", strlen(".yed_ctags")) == 0) { goto next2; }
 
             array_traverse(tmp_tags_buffers, it) {
                 if (strcmp(*it, check_path) == 0) { goto next2; }
@@ -904,7 +913,6 @@ void ctags_buffer_post_load_handler(yed_event *event) {
     if (event->buffer_is_new_file)   { return; }
 
     base = get_path_basename(event->buffer->path);
-    if (strncmp(base, ".yed_ctags", strlen(".yed_ctags")) == 0) { return; }
 
     array_traverse(tmp_tags_buffers, it) {
         if (strcmp(*it, event->buffer->path) == 0) { return; }
@@ -969,12 +977,12 @@ again:
     hit = array_last(hint_stack);
     if (hit == NULL) { return; }
 
-    if (ys->active_frame->cursor_col <= hit->col) {
+    if (ys->active_frame->cursor_col <= hit->rel_col) {
         pop_fn_hint();
         goto again;
     } else {
         balance = 1;
-        col     = hit->col + 1;
+        col     = hit->rel_col + 1;
         q       = 0;
         last    = 0;
 
@@ -1003,6 +1011,18 @@ again:
         if (balance == 0) {
             pop_fn_hint();
             goto again;
+        }
+    }
+}
+
+void ctags_var_handler(yed_event *event) {
+    if (strcmp(event->var_name, "ctags-additional-paths") == 0) {
+        if (!yed_var_is_truthy("ctags-regen-on-write")) { return; }
+
+        if (using_tmp) {
+            launch_tmp_tags_gen();
+        } else {
+            YEXE("ctags-gen");
         }
     }
 }
