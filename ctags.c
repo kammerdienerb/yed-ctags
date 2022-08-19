@@ -1051,15 +1051,14 @@ void ctags_find_line_handler(yed_event *event) {
     attrs[3] = yed_active_style_get_code_comment();
 
     attr_pos = 0;
-    col      = 0;
+    col      = 1;
     yed_line_glyph_traverse(*line, git) {
         if (git->c == '\t' && attr_pos < 3) {
             attr_pos += 1;
         }
         width = yed_get_glyph_width(*git);
         for (i = 0; i < width; i += 1) {
-            dst_attrs = array_item(event->line_attrs, col + i);
-            yed_combine_attrs(dst_attrs, attrs + attr_pos);
+            yed_eline_combine_col_attrs(event, col + i, attrs + attr_pos);
         }
         col += width;
     }
