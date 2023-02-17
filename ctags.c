@@ -499,6 +499,7 @@ void * ctags_parse_thread(void *arg) {
                 case 'd':
                     k = TAG_KIND_MACRO;
                     break;
+                case 'c':
                 case 'g':
                 case 's':
                 case 't':
