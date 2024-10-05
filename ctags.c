@@ -784,11 +784,14 @@ static char *lookup_tag_get_hint(char *tag) {
     if (!ctag_parse_path_and_search(output, path_buff, search_buff, &line_nr)) { goto out; }
 
     start = search_buff;
-    while (*start && *start != '(') { start += 1; }
-    if (!*start) { start = search_buff; }
 
-    end = search_buff + strlen(search_buff) - 1;
-    while (*end && *end != ')') { *end = 0; end -= 1; }
+    if (*start) {
+        while (*start && *start != '(') { start += 1; }
+        if (!*start) { start = search_buff; }
+
+        end = search_buff + strlen(search_buff) - 1;
+        while (*end && *end != ')') { *end = 0; end -= 1; }
+    }
 
     line = strdup(start);
 
