@@ -1057,7 +1057,7 @@ void ctags_find_line_handler(yed_event *event) {
         if (git->c == '\t' && attr_pos < 3) {
             attr_pos += 1;
         }
-        width = yed_get_glyph_width(*git);
+        width = yed_get_glyph_width(git);
         for (i = 0; i < width; i += 1) {
             yed_eline_combine_col_attrs(event, col + i, attrs + attr_pos);
         }
@@ -1189,11 +1189,11 @@ void ctags_find_filter(void) {
             git = yed_line_col_to_glyph(line, col);
             if (git->c == '\t') {
                 for (i = 0; i < max_tag_len - col + 1; i += 1) {
-                    yed_insert_into_line_no_undo(get_or_make_buff(), row, col, G(' '));
+                    yed_insert_into_line_no_undo(get_or_make_buff(), row, col, GLYPH(" "));
                 }
                 break;
             }
-            col += yed_get_glyph_width(*git);
+            col += yed_get_glyph_width(git);
         }
 
         row += 1;
