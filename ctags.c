@@ -100,7 +100,6 @@ int yed_plugin_boot(yed_plugin *self) {
 
     yed_syntax_start(&syn);
     yed_syntax_start(&syn_tmp);
-    tags       = tree_make(ctags_str_t, int);
     hint_stack = array_make(ctags_fn_hint);
 
     tmp_tags_buffers = array_make(char*);
