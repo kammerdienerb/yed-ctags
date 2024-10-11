@@ -781,19 +781,22 @@ static char *lookup_tag_get_hint(char *tag) {
     if (strcmp(tag, found_tag) != 0)              { goto out; }
 /*     if (*found_kind != 'd' && *found_kind != 'f') { goto out; } */
 
+    search_buff[0] = 0;
     if (!ctag_parse_path_and_search(output, path_buff, search_buff, &line_nr)) { goto out; }
+
+    if (!search_buff[0]) { goto out; }
 
     start = search_buff;
 
+    while (*start && *start != '(') { start += 1; }
+    if (!*start) { start = search_buff; }
+
+    end = search_buff + strlen(search_buff) - 1;
+    while (end >= start && *end != ')') { *end = 0; end -= 1; }
+
     if (*start) {
-        while (*start && *start != '(') { start += 1; }
-        if (!*start) { start = search_buff; }
-
-        end = search_buff + strlen(search_buff) - 1;
-        while (*end && *end != ')') { *end = 0; end -= 1; }
+        line = strdup(start);
     }
-
-    line = strdup(start);
 
 out:;
     if (output_cpy != NULL) { free(output_cpy); }
