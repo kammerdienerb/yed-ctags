@@ -100,7 +100,6 @@ int yed_plugin_boot(yed_plugin *self) {
 
     yed_syntax_start(&syn);
     yed_syntax_start(&syn_tmp);
-    tags       = tree_make(ctags_str_t, int);
     hint_stack = array_make(ctags_fn_hint);
 
     tmp_tags_buffers = array_make(char*);
@@ -488,6 +487,8 @@ void * ctags_parse_thread(void *arg) {
 
     pthread_mutex_lock(&tags_mtx);
 
+    ASSERT(tags == NULL, "tags tree not cleaned up");
+
     tags = tree_make(ctags_str_t, int);
 
     f = fopen(tags_file_name(), "r");
@@ -568,7 +569,7 @@ void ctags_parse_cleanup(void) {
 
     pthread_mutex_lock(&tags_mtx);
 
-    if (tags->_root == NULL) { goto out_free; }
+    if (tags == NULL) { goto out; }
 
     while (tree_len(tags)) {
         it  = tree_begin(tags);
@@ -577,8 +578,11 @@ void ctags_parse_cleanup(void) {
         free(key);
     }
 
-out_free:;
     tree_free(tags);
+
+    tags = NULL;
+
+out:;
     pthread_mutex_unlock(&tags_mtx);
 }
 
