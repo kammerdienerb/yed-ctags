@@ -590,6 +590,8 @@ void ctags_finish_parse(void) {
     yed_syntax syn_swap;
 
 LOG_CMD_ENTER("ctags");
+
+    pthread_join(parse_pthread, NULL);
     parse_thread_started = parse_thread_finished = 0;
 
     pthread_mutex_lock(&tags_mtx);
