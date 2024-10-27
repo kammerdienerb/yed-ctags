@@ -514,7 +514,10 @@ void * ctags_parse_thread(void *arg) {
                     k = 0;
             }
 
-            tree_insert(tags, strdup(tag), k);
+            it = tree_lookup(tags, tag);
+            if (!tree_it_good(it)) {
+                tree_insert(tags, strdup(tag), k);
+            }
         }
     }
 
