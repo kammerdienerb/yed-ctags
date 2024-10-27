@@ -529,23 +529,26 @@ void * ctags_parse_thread(void *arg) {
         yed_syntax_free(&syn_tmp);
         yed_syntax_start(&syn_tmp);
 
-        k = 0;
-        yed_syntax_attr_push(&syn_tmp, "");
-
+        yed_syntax_attr_push(&syn_tmp, "&code-preprocessor");
         tree_traverse(tags, it) {
-            if (tree_it_val(it) != k) {
-                yed_syntax_attr_pop(&syn_tmp);
-                switch (tree_it_val(it)) {
-                    case TAG_KIND_MACRO:      yed_syntax_attr_push(&syn_tmp, "&code-preprocessor"); break;
-                    case TAG_KIND_TYPE:       yed_syntax_attr_push(&syn_tmp, "&code-typename");     break;
-                    case TAG_KIND_ENUMERATOR: yed_syntax_attr_push(&syn_tmp, "&code-constant");     break;
-                    default:                  yed_syntax_attr_push(&syn_tmp, "");                   break;
-                }
-                k = tree_it_val(it);
+            if (tree_it_val(it) == TAG_KIND_MACRO) {
+                yed_syntax_kwd(&syn_tmp, tree_it_key(it));
             }
-            yed_syntax_kwd(&syn_tmp, tree_it_key(it));
         }
-
+        yed_syntax_attr_pop(&syn_tmp);
+        yed_syntax_attr_push(&syn_tmp, "&code-typename");
+        tree_traverse(tags, it) {
+            if (tree_it_val(it) == TAG_KIND_TYPE) {
+                yed_syntax_kwd(&syn_tmp, tree_it_key(it));
+            }
+        }
+        yed_syntax_attr_pop(&syn_tmp);
+        yed_syntax_attr_push(&syn_tmp, "&code-constant");
+        tree_traverse(tags, it) {
+            if (tree_it_val(it) == TAG_KIND_ENUMERATOR) {
+                yed_syntax_kwd(&syn_tmp, tree_it_key(it));
+            }
+        }
         yed_syntax_attr_pop(&syn_tmp);
 
         yed_syntax_end(&syn_tmp);
