@@ -556,7 +556,6 @@ void * ctags_parse_thread(void *arg) {
 out:;
     pthread_mutex_unlock(&tags_mtx);
 
-    parse_pthread         = 0;
     parse_thread_finished = 1;
 
     pthread_mutex_unlock(&parse_mtx);
@@ -593,7 +592,7 @@ void ctags_finish_parse(void) {
 LOG_CMD_ENTER("ctags");
 
     pthread_join(parse_pthread, NULL);
-    parse_thread_started = parse_thread_finished = 0;
+    parse_pthread = parse_thread_started = parse_thread_finished = 0;
 
     pthread_mutex_lock(&tags_mtx);
     memcpy(&syn_swap, &syn, sizeof(syn));
